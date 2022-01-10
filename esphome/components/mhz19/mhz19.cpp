@@ -11,6 +11,8 @@ static const uint8_t MHZ19_COMMAND_GET_PPM[] = {0xFF, 0x01, 0x86, 0x00, 0x00, 0x
 static const uint8_t MHZ19_COMMAND_ABC_ENABLE[] = {0xFF, 0x01, 0x79, 0xA0, 0x00, 0x00, 0x00, 0x00};
 static const uint8_t MHZ19_COMMAND_ABC_DISABLE[] = {0xFF, 0x01, 0x79, 0x00, 0x00, 0x00, 0x00, 0x00};
 static const uint8_t MHZ19_COMMAND_CALIBRATE_ZERO[] = {0xFF, 0x01, 0x87, 0x00, 0x00, 0x00, 0x00, 0x00};
+static const uint8_t MHZ19_COMMAND_SET_RANGE_2000[] = {0xFF, 0x01, 0x99, 0x07, 0xD0, 0x00, 0x00, 0x00};
+static const uint8_t MHZ19_COMMAND_SET_RANGE_5000[] = {0xFF, 0x01, 0x99, 0x13, 0x88, 0x00, 0x00, 0x00};
 
 uint8_t mhz19_checksum(const uint8_t *command) {
   uint8_t sum = 0;
@@ -26,6 +28,7 @@ void MHZ19Component::setup() {
   } else if (this->abc_boot_logic_ == MHZ19_ABC_DISABLED) {
     this->abc_disable();
   }
+  set_range();
 }
 
 void MHZ19Component::update() {
@@ -76,6 +79,19 @@ void MHZ19Component::abc_disable() {
   this->mhz19_write_command_(MHZ19_COMMAND_ABC_DISABLE, nullptr);
 }
 
+void set_range() {
+  ESP_LOGD(TAG, 'MHZ19 Setting Range to %s', this->detection_range_);
+  switch (this->detection_range_) {
+    case MHZ19_2000:
+      this->mhz19_write_command_(MHZ19_COMMAND_SET_RANGE_2000, nullptr);
+      break;
+    case MHZ19_5000:
+      this->mhz19_write_command_(MHZ19_COMMAND_SET_RANGE_5000, nullptr);
+    default:
+      break;
+  }
+}
+
 bool MHZ19Component::mhz19_write_command_(const uint8_t *command, uint8_t *response) {
   // Empty RX Buffer
   while (this->available())
@@ -93,6 +109,7 @@ float MHZ19Component::get_setup_priority() const { return setup_priority::DATA; 
 void MHZ19Component::dump_config() {
   ESP_LOGCONFIG(TAG, "MH-Z19:");
   LOG_SENSOR("  ", "CO2", this->co2_sensor_);
+  ESP_LOGCONFIG(TAG, "  Detection Range:", this->detection_range_);
   LOG_SENSOR("  ", "Temperature", this->temperature_sensor_);
   this->check_uart_settings(9600);
 

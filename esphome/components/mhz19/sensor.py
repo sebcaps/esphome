@@ -18,7 +18,14 @@ from esphome.const import (
 DEPENDENCIES = ["uart"]
 
 CONF_AUTOMATIC_BASELINE_CALIBRATION = "automatic_baseline_calibration"
+CONF_DETECTION_RANGE = "detection_range"
 
+mhz19_ns = cg.esphome_ns.namespace("mhz19")
+mhz19DetectionRange = mhz19_ns.enum("MHZ19DetectionRange")
+DETECTION_RANGE_OPTION = {
+    2000: mhz19DetectionRange.MHZ19_RANGE_2000,
+    5000: mhz19DetectionRange.MHZ19_RANGE_5000,
+}
 mhz19_ns = cg.esphome_ns.namespace("mhz19")
 MHZ19Component = mhz19_ns.class_("MHZ19Component", cg.PollingComponent, uart.UARTDevice)
 MHZ19CalibrateZeroAction = mhz19_ns.class_(
@@ -45,6 +52,9 @@ CONFIG_SCHEMA = (
                 state_class=STATE_CLASS_MEASUREMENT,
             ),
             cv.Optional(CONF_AUTOMATIC_BASELINE_CALIBRATION): cv.boolean,
+            cv.Optional(CONF_DETECTION_RANGE, default=2000): cv.enum(
+                DETECTION_RANGE_OPTION, int=True
+            ),
         }
     )
     .extend(cv.polling_component_schema("60s"))
@@ -67,6 +77,9 @@ async def to_code(config):
 
     if CONF_AUTOMATIC_BASELINE_CALIBRATION in config:
         cg.add(var.set_abc_enabled(config[CONF_AUTOMATIC_BASELINE_CALIBRATION]))
+
+    if CONF_DETECTION_RANGE in config:
+        cg.add(var.set_detection_range(config[CONF_DETECTION_RANGE]))
 
 
 CALIBRATION_ACTION_SCHEMA = maybe_simple_id(
