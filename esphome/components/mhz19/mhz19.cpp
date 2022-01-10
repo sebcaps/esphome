@@ -79,13 +79,13 @@ void MHZ19Component::abc_disable() {
   this->mhz19_write_command_(MHZ19_COMMAND_ABC_DISABLE, nullptr);
 }
 
-void set_range() {
-  ESP_LOGD(TAG, 'MHZ19 Setting Range to %s', this->detection_range_);
+void MHZ19Component::set_range() {
+  ESP_LOGD(TAG, "MHZ19 Setting Range to %s", this->detection_range_);
   switch (this->detection_range_) {
-    case MHZ19_2000:
+    case MHZ19_RANGE_2000:
       this->mhz19_write_command_(MHZ19_COMMAND_SET_RANGE_2000, nullptr);
       break;
-    case MHZ19_5000:
+    case MHZ19_RANGE_5000:
       this->mhz19_write_command_(MHZ19_COMMAND_SET_RANGE_5000, nullptr);
     default:
       break;
