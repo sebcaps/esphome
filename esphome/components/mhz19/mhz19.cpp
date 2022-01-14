@@ -80,13 +80,15 @@ void MHZ19Component::abc_disable() {
 }
 
 void MHZ19Component::set_range() {
-  ESP_LOGD(TAG, "MHZ19 Setting Range to %s", this->detection_range_);
   switch (this->detection_range_) {
     case MHZ19_RANGE_2000:
+      ESP_LOGD(TAG, "MHZ19 Set detection range to 2000");
       this->mhz19_write_command_(MHZ19_COMMAND_SET_RANGE_2000, nullptr);
       break;
     case MHZ19_RANGE_5000:
+      ESP_LOGD(TAG, "MHZ19 Set detection range to 5000");
       this->mhz19_write_command_(MHZ19_COMMAND_SET_RANGE_5000, nullptr);
+      break;
     default:
       break;
   }
@@ -109,7 +111,7 @@ float MHZ19Component::get_setup_priority() const { return setup_priority::DATA; 
 void MHZ19Component::dump_config() {
   ESP_LOGCONFIG(TAG, "MH-Z19:");
   LOG_SENSOR("  ", "CO2", this->co2_sensor_);
-  ESP_LOGCONFIG(TAG, "  Detection Range:", this->detection_range_);
+  ESP_LOGCONFIG(TAG, "  Detection Range:", (int) this->detection_range_);
   LOG_SENSOR("  ", "Temperature", this->temperature_sensor_);
   this->check_uart_settings(9600);
 
