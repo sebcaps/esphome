@@ -3,6 +3,9 @@
 #include "esphome/core/component.h"
 #include "esphome/components/sensor/sensor.h"
 #include "esphome/components/i2c/i2c.h"
+#include "esphome/core/defines.h"
+#include "esphome/core/automation.h"
+#include "esphome/core/hal.h"
 
 namespace esphome {
 namespace tcs34725 {
@@ -49,6 +52,9 @@ class TCS34725Component : public PollingComponent, public i2c::I2CDevice {
   void set_color_temperature_sensor(sensor::Sensor *color_temperature_sensor) {
     color_temperature_sensor_ = color_temperature_sensor;
   }
+  void set_led_pin(GPIOPin *pin_led) { this->pin_led_ = pin_led; }
+  void set_led_on();
+  void set_led_off();
 
   void setup() override;
   float get_setup_priority() const override;
@@ -77,11 +83,32 @@ class TCS34725Component : public PollingComponent, public i2c::I2CDevice {
   float glass_attenuation_{1.0};
   float illuminance_;
   float color_temperature_;
+  GPIOPin *pin_led_{nullptr};
 
  private:
   void calculate_temperature_and_lux_(uint16_t r, uint16_t g, uint16_t b, uint16_t c);
   uint8_t integration_reg_{TCS34725_INTEGRATION_TIME_2_4MS};
   uint8_t gain_reg_{TCS34725_GAIN_1X};
+};
+
+template<typename... Ts> class TCS34725LEDOff : public Action<Ts...> {
+ public:
+  TCS34725LEDOff(TCS34725Component *tcs34725) : tcs34725_(tcs34725) {}
+
+  void play(Ts... x) override { this->tcs34725_->set_led_off(); }
+
+ protected:
+  TCS34725Component *tcs34725_;
+};
+
+template<typename... Ts> class TCS34725LEDOn : public Action<Ts...> {
+ public:
+  TCS34725LEDOn(TCS34725Component *tcs34725) : tcs34725_(tcs34725) {}
+
+  void play(Ts... x) override { this->tcs34725_->set_led_on(); }
+
+ protected:
+  TCS34725Component *tcs34725_;
 };
 
 }  // namespace tcs34725

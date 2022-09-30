@@ -41,6 +41,10 @@ void TCS34725Component::setup() {
     this->mark_failed();
     return;
   }
+  if (this->pin_led_ != nullptr) {
+    this->pin_led_->setup();
+    this->pin_led_->digital_write(true);
+  }
 }
 
 void TCS34725Component::dump_config() {
@@ -57,6 +61,7 @@ void TCS34725Component::dump_config() {
   LOG_SENSOR("  ", "Blue Channel", this->blue_sensor_);
   LOG_SENSOR("  ", "Illuminance", this->illuminance_sensor_);
   LOG_SENSOR("  ", "Color Temperature", this->color_temperature_sensor_);
+  LOG_PIN("  Led Pin: ", this->pin_led_);
 }
 float TCS34725Component::get_setup_priority() const { return setup_priority::DATA; }
 
@@ -263,6 +268,15 @@ void TCS34725Component::set_glass_attenuation_factor(float ga) {
   // of 50% gives GA = 1 / 0.50 = 2. If no glass is present, use GA = 1.
   // See Application Note: DN40-Rev 1.0
   this->glass_attenuation_ = ga;
+}
+
+void TCS34725Component::set_led_on() {
+  this->pin_led_->digital_write(true);
+  ESP_LOGD(TAG, "Set Led On called");
+}
+void TCS34725Component::set_led_off() {
+  this->pin_led_->digital_write(false);
+  ESP_LOGD(TAG, "Set Led Off called");
 }
 
 }  // namespace tcs34725
