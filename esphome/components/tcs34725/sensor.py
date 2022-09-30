@@ -1,6 +1,10 @@
 import esphome.codegen as cg
 import esphome.config_validation as cv
 from esphome.components import i2c, sensor
+from esphome import automation
+from esphome.automation import maybe_simple_id
+from esphome import pins
+
 from esphome.const import (
     CONF_COLOR_TEMPERATURE,
     CONF_GAIN,
@@ -15,6 +19,7 @@ from esphome.const import (
     ICON_THERMOMETER,
     UNIT_KELVIN,
     UNIT_LUX,
+    CONF_LED_PIN,
 )
 
 DEPENDENCIES = ["i2c"]
@@ -28,6 +33,9 @@ tcs34725_ns = cg.esphome_ns.namespace("tcs34725")
 TCS34725Component = tcs34725_ns.class_(
     "TCS34725Component", cg.PollingComponent, i2c.I2CDevice
 )
+
+TCS34725LEDOn = tcs34725_ns.class_("TCS34725LEDOn", automation.Action)
+TCS34725LEDOff = tcs34725_ns.class_("TCS34725LEDOff", automation.Action)
 
 TCS34725IntegrationTime = tcs34725_ns.enum("TCS34725IntegrationTime")
 TCS34725_INTEGRATION_TIMES = {
@@ -78,6 +86,7 @@ illuminance_schema = sensor.sensor_schema(
     state_class=STATE_CLASS_MEASUREMENT,
 )
 
+
 CONFIG_SCHEMA = (
     cv.Schema(
         {
@@ -99,6 +108,11 @@ CONFIG_SCHEMA = (
     )
     .extend(cv.polling_component_schema("60s"))
     .extend(i2c.i2c_device_schema(0x29))
+    .extend(
+        {
+            cv.Optional(CONF_LED_PIN): cv.All(pins.internal_gpio_output_pin_schema),
+        }
+    )
 )
 
 
@@ -129,3 +143,18 @@ async def to_code(config):
     if CONF_COLOR_TEMPERATURE in config:
         sens = await sensor.new_sensor(config[CONF_COLOR_TEMPERATURE])
         cg.add(var.set_color_temperature_sensor(sens))
+    if CONF_LED_PIN in config:
+        pin_led = await cg.gpio_pin_expression(config[CONF_LED_PIN])
+        cg.add(var.set_led_pin(pin_led))
+
+
+LED_ACTION_SCHEMA = maybe_simple_id(
+    {cv.Required(CONF_ID): cv.use_id(TCS34725Component)}
+)
+
+
+@automation.register_action("tcs34725.led_on", TCS34725LEDOn, LED_ACTION_SCHEMA)
+@automation.register_action("tcs34725.led_off", TCS34725LEDOff, LED_ACTION_SCHEMA)
+async def tcs34725_led_to_code(config, action_id, template_arg, args):
+    paren = await cg.get_variable(config[CONF_ID])
+    return cg.new_Pvariable(action_id, template_arg, paren)
