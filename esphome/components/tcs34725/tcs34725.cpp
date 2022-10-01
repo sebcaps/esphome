@@ -43,7 +43,7 @@ void TCS34725Component::setup() {
   }
   if (this->pin_led_ != nullptr) {
     this->pin_led_->setup();
-    this->pin_led_->digital_write(true);
+    this->pin_led_->digital_write(this->led_start_enabled_);
   }
 }
 
@@ -62,6 +62,7 @@ void TCS34725Component::dump_config() {
   LOG_SENSOR("  ", "Illuminance", this->illuminance_sensor_);
   LOG_SENSOR("  ", "Color Temperature", this->color_temperature_sensor_);
   LOG_PIN("  Led Pin: ", this->pin_led_);
+  ESP_LOGCONFIG(TAG, "  Led start enabled: %s", (led_start_enabled_) ? "True" : "False");
 }
 float TCS34725Component::get_setup_priority() const { return setup_priority::DATA; }
 
@@ -271,12 +272,12 @@ void TCS34725Component::set_glass_attenuation_factor(float ga) {
 }
 
 void TCS34725Component::set_led_on() {
-  this->pin_led_->digital_write(true);
   ESP_LOGD(TAG, "Set Led On called");
+  this->pin_led_->digital_write(true);
 }
 void TCS34725Component::set_led_off() {
-  this->pin_led_->digital_write(false);
   ESP_LOGD(TAG, "Set Led Off called");
+  this->pin_led_->digital_write(false);
 }
 
 }  // namespace tcs34725

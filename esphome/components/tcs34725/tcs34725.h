@@ -53,6 +53,7 @@ class TCS34725Component : public PollingComponent, public i2c::I2CDevice {
     color_temperature_sensor_ = color_temperature_sensor;
   }
   void set_led_pin(GPIOPin *pin_led) { this->pin_led_ = pin_led; }
+  void set_led_start_enabled(bool led_start_enabled) { this->led_start_enabled_ = led_start_enabled; }
   void set_led_on();
   void set_led_off();
 
@@ -84,6 +85,7 @@ class TCS34725Component : public PollingComponent, public i2c::I2CDevice {
   float illuminance_;
   float color_temperature_;
   GPIOPin *pin_led_{nullptr};
+  bool led_start_enabled_;
 
  private:
   void calculate_temperature_and_lux_(uint16_t r, uint16_t g, uint16_t b, uint16_t c);

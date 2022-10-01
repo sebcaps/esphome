@@ -12,6 +12,7 @@ from esphome.const import (
     CONF_ILLUMINANCE,
     CONF_GLASS_ATTENUATION_FACTOR,
     CONF_INTEGRATION_TIME,
+    CONF_LED_START_ENABLED,
     DEVICE_CLASS_ILLUMINANCE,
     ICON_LIGHTBULB,
     STATE_CLASS_MEASUREMENT,
@@ -113,6 +114,11 @@ CONFIG_SCHEMA = (
             cv.Optional(CONF_LED_PIN): cv.All(pins.internal_gpio_output_pin_schema),
         }
     )
+    .extend(
+        {
+            cv.Optional(CONF_LED_START_ENABLED, default=True): cv.boolean,
+        }
+    )
 )
 
 
@@ -146,6 +152,8 @@ async def to_code(config):
     if CONF_LED_PIN in config:
         pin_led = await cg.gpio_pin_expression(config[CONF_LED_PIN])
         cg.add(var.set_led_pin(pin_led))
+    if CONF_LED_START_ENABLED in config:
+        cg.add(var.set_led_start_enabled(config[CONF_LED_START_ENABLED]))
 
 
 LED_ACTION_SCHEMA = maybe_simple_id(
