@@ -87,7 +87,15 @@ illuminance_schema = sensor.sensor_schema(
     state_class=STATE_CLASS_MEASUREMENT,
 )
 
-
+INTERRUPT_SCHEMA = cv.Schema(
+    {
+        cv.Optional("interrupt_pin"): cv.All(
+            pins.internal_gpio_input_pullup_pin_schema
+        ),
+        cv.Required("high_level"): cv.All(cv.int_),
+        cv.Required("low_level"): cv.All(cv.int_),
+    }
+)
 CONFIG_SCHEMA = (
     cv.Schema(
         {
@@ -119,6 +127,7 @@ CONFIG_SCHEMA = (
             cv.Optional(CONF_LED_START_ENABLED, default=True): cv.boolean,
         }
     )
+    .extend(INTERRUPT_SCHEMA)
 )
 
 
@@ -154,6 +163,11 @@ async def to_code(config):
         cg.add(var.set_led_pin(pin_led))
     if CONF_LED_START_ENABLED in config:
         cg.add(var.set_led_start_enabled(config[CONF_LED_START_ENABLED]))
+    if "interrupt_pin" in config:
+        interrupt_pin = await (cg.gpio_pin_expression(config["interrupt_pin"]))
+        cg.add(var.set_interrupt_pin(interrupt_pin))
+        cg.add(var.set_high_threshold(config["high_level"]))
+        cg.add(var.set_low_threshold(config["low_level"]))
 
 
 LED_ACTION_SCHEMA = maybe_simple_id(

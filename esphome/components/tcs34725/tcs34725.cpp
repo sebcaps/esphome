@@ -17,6 +17,11 @@ static const uint8_t TCS34725_REGISTER_CDATAL = TCS34725_COMMAND_BIT | 0x14;
 static const uint8_t TCS34725_REGISTER_RDATAL = TCS34725_COMMAND_BIT | 0x16;
 static const uint8_t TCS34725_REGISTER_GDATAL = TCS34725_COMMAND_BIT | 0x18;
 static const uint8_t TCS34725_REGISTER_BDATAL = TCS34725_COMMAND_BIT | 0x1A;
+static const uint8_t TCS34275_REGISTER_AILTL = TCS34725_COMMAND_BIT | 0x04;
+static const uint8_t TCS34275_REGISTER_AILTH = TCS34725_COMMAND_BIT | 0x05;
+static const uint8_t TCS34275_REGISTER_AIHTL = TCS34725_COMMAND_BIT | 0x06;
+static const uint8_t TCS34275_REGISTER_AIHTH = TCS34725_COMMAND_BIT | 0x07;
+static const uint8_t TCS34275_REGISTER_CONFIG = TCS34725_COMMAND_BIT | 0x0D;
 
 void TCS34725Component::setup() {
   ESP_LOGCONFIG(TAG, "Setting up TCS34725...");
@@ -41,6 +46,21 @@ void TCS34725Component::setup() {
     this->mark_failed();
     return;
   }
+
+  if (this->pin_interrupt_ != nullptr) {
+    if ((this->write_config_register_(TCS34725_REGISTER_ENABLE, 0x4)) != i2c::ERROR_OK) {
+      this->mark_failed();
+      return;
+    }
+    if (!interrupt_pin_setup_(this->pin_interrupt_)) {
+      this->mark_failed();
+      return;
+    }
+    if (!set_interrupt_threshold(this->low_, this->high_)) {
+      this->mark_failed();
+      return;
+    }
+  }
   if (this->pin_led_ != nullptr) {
     this->pin_led_->setup();
     this->pin_led_->digital_write(this->led_start_enabled_);
@@ -63,6 +83,8 @@ void TCS34725Component::dump_config() {
   LOG_SENSOR("  ", "Color Temperature", this->color_temperature_sensor_);
   LOG_PIN("  Led Pin: ", this->pin_led_);
   ESP_LOGCONFIG(TAG, "  Led start enabled: %s", (led_start_enabled_) ? "True" : "False");
+  LOG_PIN("  Interrupt Pin:", this->pin_interrupt_);
+  // LOG_SENSOR("  ", "Color Temperature", this->color_temperature_sensor_);
 }
 float TCS34725Component::get_setup_priority() const { return setup_priority::DATA; }
 
@@ -278,6 +300,60 @@ void TCS34725Component::set_led_on() {
 void TCS34725Component::set_led_off() {
   ESP_LOGD(TAG, "Set Led Off called");
   this->pin_led_->digital_write(false);
+}
+bool TCS34725Component::set_interrupt_threshold(uint16_t lowlevel, uint16_t highlevel) {
+  ESP_LOGD(TAG, "set_interrupt_threshold low: %u, high %u", lowlevel, highlevel);
+  if (this->write_config_register_(TCS34275_REGISTER_AILTL, lowlevel & 0xFF) != i2c::ERROR_OK ||
+      this->write_config_register_(TCS34275_REGISTER_AILTH, lowlevel >> 8) != i2c::ERROR_OK ||
+      this->write_config_register_(TCS34275_REGISTER_AIHTL, highlevel & 0xFF) != i2c::ERROR_OK ||
+      this->write_config_register_(TCS34275_REGISTER_AIHTH, highlevel >> 8) != i2c::ERROR_OK) {
+    this->mark_failed();
+    return false;
+  }
+  this->status_clear_warning();
+  return true;
+}
+bool TCS34725Component::interrupt_pin_setup_(InternalGPIOPin *pin) {
+  this->pin_interrupt_ = pin;
+  this->pin_interrupt_->setup();
+  this->pin_interrupt_->to_isr();
+  this->pin_interrupt_->attach_interrupt(TCS34725Component::gpio_intr, this, gpio::INTERRUPT_LOW_LEVEL);
+  return true;
+}
+void IRAM_ATTR TCS34725Component::gpio_intr(TCS34725Component *arg) {
+  ESP_LOGD(TAG, "  Interrupt function called");
+  // uint32_t wait = arg->bit_time_ + arg->bit_time_ / 3 - 500;
+  // const uint32_t start = arch_get_cpu_cycle_count();
+  // uint8_t rec = 0;
+  // // Manually unroll the loop
+  // for (int i = 0; i < arg->data_bits_; i++)
+  //   rec |= arg->read_bit_(&wait, start) << i;
+
+  // /* If parity is enabled, just read it and ignore it. */
+  // /* TODO: Should we check parity? Or is it too slow for nothing added..*/
+  // if (arg->parity_ == UART_CONFIG_PARITY_EVEN || arg->parity_ == UART_CONFIG_PARITY_ODD)
+  //   arg->read_bit_(&wait, start);
+
+  // // Stop bit
+  // arg->wait_(&wait, start);
+  // if (arg->stop_bits_ == 2)
+  //   arg->wait_(&wait, start);
+
+  // arg->rx_buffer_[arg->rx_in_pos_] = rec;
+  // arg->rx_in_pos_ = (arg->rx_in_pos_ + 1) % arg->rx_buffer_size_;
+  // // Clear RX pin so that the interrupt doesn't re-trigger right away again.
+  // arg->rx_pin_.clear_interrupt();
+}
+
+void TCS34725Component::get_interrupt_threshold() {
+  uint16_t low, high;
+  if (this->read_data_register_(TCS34275_REGISTER_AILTL, low) != i2c::ERROR_OK ||
+      this->read_data_register_(TCS34275_REGISTER_AIHTL, high) != i2c::ERROR_OK) {
+    ESP_LOGE(TAG, "  Error Getting threshold");
+    this->mark_failed();
+    return;
+  }
+  ESP_LOGD(TAG, "  Threshold levels are : low: %u; high:%u", low, high);
 }
 
 }  // namespace tcs34725

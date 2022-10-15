@@ -56,11 +56,17 @@ class TCS34725Component : public PollingComponent, public i2c::I2CDevice {
   void set_led_start_enabled(bool led_start_enabled) { this->led_start_enabled_ = led_start_enabled; }
   void set_led_on();
   void set_led_off();
+  void set_interrupt_pin(InternalGPIOPin *pin) { this->pin_interrupt_ = pin; }
+  void set_high_threshold(uint16_t high) { this->high_ = high; }
+  void set_low_threshold(uint16_t low) { this->low_ = low; }
+  void enable_interrupt();
 
   void setup() override;
   float get_setup_priority() const override;
   void update() override;
   void dump_config() override;
+  void get_interrupt_threshold();
+  bool set_interrupt_threshold(uint16_t low, uint16_t high);
 
  protected:
   i2c::ErrorCode read_data_register_(uint8_t a_register, uint16_t &data) {
@@ -86,11 +92,18 @@ class TCS34725Component : public PollingComponent, public i2c::I2CDevice {
   float color_temperature_;
   GPIOPin *pin_led_{nullptr};
   bool led_start_enabled_;
+  InternalGPIOPin *pin_interrupt_{nullptr};
+  uint16_t low_{0};
+  uint16_t high_{0};
+  static void gpio_intr(TCS34725Component *arg);
 
  private:
   void calculate_temperature_and_lux_(uint16_t r, uint16_t g, uint16_t b, uint16_t c);
   uint8_t integration_reg_{TCS34725_INTEGRATION_TIME_2_4MS};
   uint8_t gain_reg_{TCS34725_GAIN_1X};
+  // TODO
+  // static void trigger_interrupt();
+  bool interrupt_pin_setup_(InternalGPIOPin *pin);
 };
 
 template<typename... Ts> class TCS34725LEDOff : public Action<Ts...> {
