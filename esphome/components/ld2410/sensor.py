@@ -4,7 +4,6 @@ import esphome.config_validation as cv
 from esphome.const import (
     DEVICE_CLASS_DISTANCE,
     DEVICE_CLASS_ENERGY,
-    UNIT_CENTIMETER,
     UNIT_PERCENT,
 )
 from . import CONF_LD2410_ID, LD2410Component
@@ -15,6 +14,7 @@ CONF_STILL_DISTANCE = "still_distance"
 CONF_MOVING_ENERGY = "moving_energy"
 CONF_STILL_ENERGY = "still_energy"
 CONF_DETECTION_DISTANCE = "detection_distance"
+UNIT_CENTIMETER = "cm"
 
 CONFIG_SCHEMA = {
     cv.GenerateID(CONF_LD2410_ID): cv.use_id(LD2410Component),
