@@ -19,6 +19,7 @@ static const uint8_t CMD_MAXDIST_DURATION = 0x0060;
 static const uint8_t CMD_QUERY = 0x0061;
 static const uint8_t CMD_GATE_SENS = 0x0064;
 static const uint8_t CMD_VERSION = 0x00A0;
+static const uint8_t CMD_BAUD_RATE = 0x00A1;
 
 // Commands values
 static const uint8_t CMD_MAX_MOVE_VALUE = 0x0000;
@@ -54,6 +55,17 @@ enum PeriodicDataStructure : uint8_t {
 enum PeriodicDataValue : uint8_t { HEAD = 0XAA, END = 0x55, CHECK = 0x00 };
 
 enum AckDataStructure : uint8_t { COMMAND = 6, COMMAND_STATUS = 7 };
+
+enum  BaudRate : uint8_t {
+  RATE_9600 = 0x01,
+  RATE_19200 = 0x02,
+  RATE_38400 = 0x03,
+  RATE_57600 = 0X04,
+  RATE_115200 = 0X05,
+  RATE_230400 = 0x06,
+  RATE_256000 = 0X07,
+  RATE_460800 = 0X08
+};
 
 //  char cmd[2] = {enable ? 0xFF : 0xFE, 0x00};
 class LD2410Component : public PollingComponent, public uart::UARTDevice {
@@ -96,6 +108,7 @@ class LD2410Component : public PollingComponent, public uart::UARTDevice {
     this->rg8_move_threshold_ = rg8_move;
     this->rg8_still_threshold_ = rg8_still;
   };
+  void set_baud_rate(BaudRate baudrate);
   int moving_sensitivities[9] = {0};
   int still_sensitivities[9] = {0};
 

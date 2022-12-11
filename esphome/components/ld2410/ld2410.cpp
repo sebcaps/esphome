@@ -32,6 +32,7 @@ void LD2410Component::dump_config() {
 void LD2410Component::setup() {
   set_update_interval(15000);
   this->set_config_mode_(true);
+  this->set_baud_rate(RATE_115200);
   this->set_max_distances_none_duration_(this->max_move_distance_, this->max_still_distance_, this->noneduration_);
   // Configure Gates sensitivity
   this->set_gate_threshold_(0, this->rg0_move_threshold_, this->rg0_still_threshold_);
@@ -311,11 +312,10 @@ void LD2410Component::set_gate_threshold_(uint8_t gate, uint8_t motionsens, uint
   this->send_command_(CMD_GATE_SENS, value, 18);
 }
 
-// void ld2410::setBaudrate(int index) {
-//   char cmd[2] = {0xA1, 0x00};
-//   char value[2] = {index, 0x00};
-//   send_command_(cmd, value, 2);
-// }
+void LD2410Component::set_baud_rate(BaudRate baudrate) {
+  uint8_t value[2] = {baudrate, 0x00};
+  this->send_command_(CMD_BAUD_RATE, value, 2);
+}
 
 }  // namespace ld2410
 }  // namespace esphome

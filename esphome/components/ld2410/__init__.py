@@ -9,7 +9,6 @@ DEPENDENCIES = ["uart"]
 CODEOWNERS = ["@sebcaps"]
 
 AUTO_LOAD = ["sensor", "binary_sensor"]
-
 ld2410_ns = cg.esphome_ns.namespace("ld2410")
 LD2410Component = ld2410_ns.class_(
     "LD2410Component", cg.PollingComponent, uart.UARTDevice
@@ -115,6 +114,8 @@ async def to_code(config):
     var = cg.new_Pvariable(config[CONF_ID])
     await cg.register_component(var, config)
     await uart.register_uart_device(var, config)
+    # var2 = await cg.get_variable(config[CONF_UART_ID])
+    # _LOGGER.debug("Waiting for variable %s", var2)
     cg.add(var.set_none_duration(config[CONF_NONE_DURATION]))
     cg.add(var.set_max_move_distance(config[CONF_MAX_MOVE_DISTANCE]))
     cg.add(var.set_max_still_distance(config[CONF_MAX_STILL_DISTANCE]))
