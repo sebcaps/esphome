@@ -34,7 +34,8 @@ void rdm6300::RDM6300Component::loop() {
       }
       this->read_state_++;
     } else if (data != RDM6300_END_BYTE) {
-      ESP_LOGW(TAG, "Invalid end byte from RDM6300!");
+      ESP_LOGW(TAG, "Invalid end byte from RDM6300! Read value a HEX %02x, as DEC %i, expected %02x", data, data,
+               RDM6300_END_BYTE);
       this->read_state_ = RDM6300_STATE_WAITING_FOR_START;
     } else {
       uint8_t checksum = 0;
