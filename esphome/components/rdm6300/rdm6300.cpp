@@ -47,6 +47,7 @@ void rdm6300::RDM6300Component::loop() {
       } else {
         // Valid data
         this->status_clear_warning();
+        ESP_LOGD(TAG, "All processing OK, checking if report needed");
         const uint32_t result = encode_uint32(this->buffer_[1], this->buffer_[2], this->buffer_[3], this->buffer_[4]);
         bool report = result != last_id_;
         for (auto *card : this->cards_) {
@@ -57,9 +58,9 @@ void rdm6300::RDM6300Component::loop() {
         for (auto *trig : this->triggers_)
           trig->process(result);
 
-        if (report) {
-          ESP_LOGD(TAG, "Found new tag with ID %u", result);
-        }
+        // if (report) {
+        ESP_LOGD(TAG, "Found new tag with ID %u", result);
+        // }
       }
     }
   }
